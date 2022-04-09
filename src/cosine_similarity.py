@@ -52,6 +52,15 @@ class CosineSimilaritySearch:
             document_stats: DocumentStats = self.tf_idf_inverted_idx[term].documents[document.doc_id]
             doc_vec[self.term_to_vec_mapping[term]] = document_stats.tfidf
 
+        # Calculate the cosine similarity
+        print()
+        qn = query_vec / np.linalg.norm(query_vec)
+        vn = doc_vec / np.linalg.norm(doc_vec)
+        print(qn)
+        print(vn)
+
+        print(qn.dot(vn))
+
         # Finally, calculate the cosine similarity
         return np.dot(query_vec, doc_vec) / (np.linalg.norm(doc_vec) * np.linalg.norm(query_vec))
 
@@ -60,9 +69,8 @@ class CosineSimilaritySearch:
         term_to_document_stats = {}
         for term, freq in query_bow.items():
             document_stats = DocumentStats(query_doc, freq)
-            # for a query document we will use non-log tf since it usually provides better results
-            tf = freq
-            idf = np.log(self.total_docs / self.tf_idf_inverted_idx[term].df)
+            tf = 1 + np.log10(freq)
+            idf = np.log10(self.total_docs / self.tf_idf_inverted_idx[term].df)
             document_stats.set_tfidf(tf * idf)
 
             term_to_document_stats[term] = document_stats

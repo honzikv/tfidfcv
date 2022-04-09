@@ -11,20 +11,8 @@ class DocumentStats:
 
     def __init__(self, document: Document, occurrences: int):
         self.document = document  # Reference to the document
-        self.term_count = occurrences  # no. times the term appears in the document
-        self._tf = None  # Term frequency
+        self.tf = occurrences  # no. times the term appears in the document
         self._tfidf = None  # Term frequency inverse document frequency
-
-    @property
-    def tf(self):
-        """
-        Returns the term frequency
-        This should only be called after the document has been processed
-        :return:
-        """
-        if self._tf is None:
-            self._tf = self.term_count / len(self.document.tokens)
-        return self._tf
 
     def set_tfidf(self, tfidf):
         self._tfidf = tfidf
@@ -37,7 +25,7 @@ class DocumentStats:
         return f"""
         DocumentStats:
             document_id: {self.document.doc_id}
-            term_count: {self.term_count}
+            term_count: {self.tf}
             term_frequency: {self.tf}
             tfidf: {self.tfidf}"""
 
@@ -74,8 +62,9 @@ class TermStats:
         :return:
         """
         for document in self.documents.values():
-            tf = np.log(1 + document.tf) if log_tf else document.tf  # term frequency as an integer
-            idf = np.log(total_docs / self.df)
+            tf = 1 + np.log10(
+                document.tf) if log_tf and document.tf > 0 else document.tf  # term frequency as an integer
+            idf = np.log10(total_docs / self.df)
             document.set_tfidf(tf * idf)
 
     def __str__(self):

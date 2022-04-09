@@ -21,8 +21,10 @@ for document in english_documents:
     print(document)
 
 # Calculate tf-idf for each document
-
 tf_idf = create_inverted_tfidf_idx(english_documents)
+
+# Print all terms
+print(f'Terms: {list(tf_idf.keys())}')
 
 for term, termStats in tf_idf.items():
     print(term, termStats)
@@ -33,8 +35,8 @@ query2 = 'tropical fish'
 
 cosine_similarity = CosineSimilaritySearch(tf_idf, english_documents, english_preprocessor)
 
-top_2_query1 = cosine_similarity.get_top_n_documents(query1, 2)
-top_2_query2 = cosine_similarity.get_top_n_documents(query2, 2)
+top_2_query1 = cosine_similarity.get_top_n_documents(query1, 5)
+top_2_query2 = cosine_similarity.get_top_n_documents(query2, 5)
 
 print('\nQuery 1: ', query1)
 for score, doc in top_2_query1:

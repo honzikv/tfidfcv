@@ -36,13 +36,13 @@ query2 = 'krásné město'
 
 cosine_similarity = CosineSimilaritySearch(tf_idf, czech_documents, czech_preprocessor)
 
-top_2_query1 = cosine_similarity.get_top_n_documents(query1, 2)
-top_2_query2 = cosine_similarity.get_top_n_documents(query2, 2)
+# top_2_query1 = cosine_similarity.get_top_n_documents(query1, 2)
+top_3_query2 = cosine_similarity.get_top_n_documents(query2, 3)
 
-print('\nQuery 1: ', query1)
-for score, doc in top_2_query1:
-    print(score, '\n', doc)
+# print('\nQuery 1: ', query1)
+# for score, doc in top_2_query1:
+#     print(score, '\n', doc)
 
 print('\nQuery 2: ', query2)
-for score, doc in top_2_query2:
+for score, doc in top_3_query2:
     print(score, '\n', doc)
