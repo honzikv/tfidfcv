@@ -33,25 +33,25 @@ class Tokenizer:
         text = re.sub(Tokenizer.BASIC_LATIN_CHARACTERS, '', text)
 
         # For each regex, find all matches and add them to the set
-        tokens = set()
+        tokens = []
         split_by_ws = text.split(' ')
         for regex in self.regexes:
             for text_by_ws in split_by_ws:
-                tokens.update(self._get_all_regex_items(regex, text_by_ws))
+                tokens.extend(self._get_all_regex_items(regex, text_by_ws))
 
         return tokens
 
     @staticmethod
     def _get_all_regex_items(regex, text):
         groups = re.findall(regex, text)
-        items = set()
+        items = []
         for group in groups:
             if type(group) == tuple:
                 for item in filter(lambda x: x != '', group):
-                    items.add(item)
+                    items.append(item)
                 continue
 
             if group != '':
-                items.add(group)
+                items.append(group)
 
         return items

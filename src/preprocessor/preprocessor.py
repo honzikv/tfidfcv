@@ -33,7 +33,7 @@ class Preprocessor:
         self.tokenizer = tokenizer
         self.stopwords = stopwords if stopwords else []
 
-    def get_terms(self, text):
+    def get_processed_tokens(self, text):
         """
         Get terms from a text and returns them in a list
         :param text: text to be preprocessed
@@ -46,7 +46,7 @@ class Preprocessor:
             text = self._remove_accents(text)
 
         # If tokenizer is not passed the text is split by whitespaces
-        # Otherwise its tokenize() method is called
+        # Otherwise the tokenize method is called
         tokens = self.tokenizer.tokenize(text) if self.tokenizer else text.split(' ')
 
         # Remove stop words if toggled
