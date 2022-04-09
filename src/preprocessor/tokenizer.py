@@ -1,4 +1,6 @@
-import re
+import regex as re
+
+from src.utils.collections import flatten
 
 
 class Tokenizer:
@@ -10,14 +12,15 @@ class Tokenizer:
     URL_REGEX = r'(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][' \
                 r'a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,' \
                 r'}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/ '
-    CENSORED_REGEX = r'\w+\**\w*'
+    CENSORED_REGEX = r'[\w+À-ž]+\*[\w+À-ž]*|[\w+À-ž]*\*[\w+À-ž]+'
     DATE_REGEX = r'\d{1,2}\.\s?\d{1,2}\.\s*\d{0,4}'
 
     # Regex used to filter out all non-latin characters - e.g chinese, japanese, etc.
-    BASIC_LATIN_CHARACTERS = r'[\p{IsCyrillic}\p{script=Han}\p{script=Hiragana}\p{script=Katakana}\u0600-\u06FF]'
+    BASIC_LATIN_CHARACTERS = r'[\p{IsCyrillic}\p{Han}\p{Hiragana}\p{Katakana}\u0600-\u06FF]'
 
     def __init__(self):
         self.regexes = [Tokenizer.DEFAULT_REGEX, Tokenizer.URL_REGEX, Tokenizer.CENSORED_REGEX, Tokenizer.DATE_REGEX]
+        # self.regexes = [Tokenizer.CENSORED_REGEX]
 
     def tokenize(self, text: str):
         """
@@ -33,8 +36,22 @@ class Tokenizer:
         tokens = set()
         split_by_ws = text.split(' ')
         for regex in self.regexes:
-            regex_tokens = {re.findall(regex, text_by_ws) for text_by_ws in split_by_ws}
-            for regex_token in regex_tokens:
-                tokens.add(regex_token)  # add each found token to the dictionary
+            for text_by_ws in split_by_ws:
+                tokens.update(self._get_all_regex_items(regex, text_by_ws))
 
         return tokens
+
+    @staticmethod
+    def _get_all_regex_items(regex, text):
+        groups = re.findall(regex, text)
+        items = set()
+        for group in groups:
+            if type(group) == tuple:
+                for item in filter(lambda x: x != '', group):
+                    items.add(item)
+                continue
+
+            if group != '':
+                items.add(group)
+
+        return items
