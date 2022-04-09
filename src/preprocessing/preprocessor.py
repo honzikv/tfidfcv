@@ -2,9 +2,9 @@ import os
 import unicodedata
 from typing import Iterable
 
-from src.preprocessor.czech_stemmer import CzechStemmer
-from src.preprocessor.porter_stemmer import PorterStemmer
-from src.preprocessor.tokenizer import Tokenizer
+from src.preprocessing.czech_stemmer import CzechStemmer
+from src.preprocessing.porter_stemmer import PorterStemmer
+from src.preprocessing.tokenizer import Tokenizer
 
 
 class PreprocessorConfig:

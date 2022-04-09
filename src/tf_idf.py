@@ -40,14 +40,23 @@ class DocumentStats:
     def tfidf(self):
         return self._tfidf
 
+    def __str__(self):
+        return f"""
+        DocumentStats:
+            document_id: {self.document.doc_id}
+            term_count: {self.term_count}
+            term_frequency: {self.tf}
+            tfidf: {self.tfidf}"""
+
 
 class TermStats:
     """
     Represents stats for specific term in the corpus
     """
 
-    def __init__(self, document: Document):
-        self.total_count = 0  # total number of terms in the corpus
+    def __init__(self, document: Document, text: str):
+        self.total_count = 1  # total number of terms in the corpus
+        self.text = text  # mostly for debugging, would not be used in production
         self.documents = {
             document.doc_id: DocumentStats(document)
         }  # dictionary containing the documents where the term appears
@@ -59,7 +68,10 @@ class TermStats:
         :param document:
         :return:
         """
-        self.documents[document.doc_id].increment()
+        if document.doc_id not in self.documents:
+            self.documents[document.doc_id] = DocumentStats(document)
+        else:
+            self.documents[document.doc_id].increment()
 
     @property
     def df(self):
@@ -78,9 +90,15 @@ class TermStats:
         :return:
         """
         for document in self.documents.values():
-            tf = 1 + np.log(document.tf) if log_tf else document.tf  # term frequency as an integer
+            tf = np.log(1 + document.tf) if log_tf else document.tf  # term frequency as an integer
             df = self.df
             document.set_tfidf(tf * np.log(total_docs / df))
+
+    def __str__(self):
+        return f"""TermStats:
+                total_count: {self.total_count}
+                document_frequency: {self.df}
+                documents: {''.join([str(doc) for doc in self.documents.values()])}"""
 
 
 def create_inverted_tfidf_idx(documents: List[Document]):
@@ -94,7 +112,7 @@ def create_inverted_tfidf_idx(documents: List[Document]):
         tokens = document.tokens
         for token in tokens:
             if token not in inverted_idx:
-                inverted_idx[token] = TermStats(document)
+                inverted_idx[token] = TermStats(document, token)
             else:
                 inverted_idx[token].update_document_stats(document)
 
@@ -103,3 +121,4 @@ def create_inverted_tfidf_idx(documents: List[Document]):
     for term in inverted_idx:
         inverted_idx[term].calculate_tf_idf(total_docs)
 
+    return inverted_idx

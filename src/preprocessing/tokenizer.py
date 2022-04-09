@@ -1,7 +1,5 @@
 import regex as re
 
-from src.utils.collections import flatten
-
 
 class Tokenizer:
     """
