@@ -9,18 +9,11 @@ class DocumentStats:
     Represents stats for specific term in the document
     """
 
-    def __init__(self, document: Document):
+    def __init__(self, document: Document, occurrences: int):
         self.document = document  # Reference to the document
-        self.term_count = 1  # no. times the term appears in the document
+        self.term_count = occurrences  # no. times the term appears in the document
         self._tf = None  # Term frequency
         self._tfidf = None  # Term frequency inverse document frequency
-
-    def increment(self):
-        """
-        Increments the term count by one
-        :return:
-        """
-        self.term_count += 1
 
     @property
     def tf(self):
@@ -54,34 +47,25 @@ class TermStats:
     Represents stats for specific term in the corpus
     """
 
-    def __init__(self, document: Document, text: str):
-        self.total_count = 1  # total number of terms in the corpus
-        self.text = text  # mostly for debugging, would not be used in production
+    def __init__(self, document: Document, term_str: str, occurrences: int):
+        self.df = 1  # total number of terms in the corpus
+        self.cf = occurrences  # total number of occurrences in the corpus
+        self.text = term_str  # mostly for debugging, would not be used in production
         self.documents = {
-            document.doc_id: DocumentStats(document)
+            document.doc_id: DocumentStats(document, occurrences)
         }  # dictionary containing the documents where the term appears
         self._df = None  # Inverse document frequency
 
-    def update_document_stats(self, document: Document):
+    def add_document_stats(self, document: Document, occurrences: int):
         """
         Updates the document stats for the term
-        :param document:
+        :param occurrences: number of times the term appears in the document
+        :param document: the document
         :return:
         """
-        if document.doc_id not in self.documents:
-            self.documents[document.doc_id] = DocumentStats(document)
-        else:
-            self.documents[document.doc_id].increment()
-
-    @property
-    def df(self):
-        """
-        Returns the document frequency of the term
-        :return:
-        """
-        if self._df is None:
-            self._df = len(self.documents) / self.total_count
-        return self._df
+        self.cf += occurrences
+        self.df += 1
+        self.documents[document.doc_id] = DocumentStats(document, occurrences)
 
     def calculate_tf_idf(self, total_docs: int, log_tf=True):
         """
@@ -91,12 +75,12 @@ class TermStats:
         """
         for document in self.documents.values():
             tf = np.log(1 + document.tf) if log_tf else document.tf  # term frequency as an integer
-            df = self.df
-            document.set_tfidf(tf * np.log(total_docs / df))
+            idf = np.log(total_docs / self.df)
+            document.set_tfidf(tf * idf)
 
     def __str__(self):
         return f"""TermStats:
-                total_count: {self.total_count}
+                collection_frequency: {self.cf}
                 document_frequency: {self.df}
                 documents: {''.join([str(doc) for doc in self.documents.values()])}"""
 
@@ -109,12 +93,13 @@ def create_inverted_tfidf_idx(documents: List[Document]):
     # Create a dictionary of terms and their stats
     inverted_idx = {}
     for document in documents:
-        tokens = document.tokens
-        for token in tokens:
-            if token not in inverted_idx:
-                inverted_idx[token] = TermStats(document, token)
+        # Get (initialize) bow for the document
+        bow = document.bow
+        for term, occurrences in bow.items():
+            if term not in inverted_idx:
+                inverted_idx[term] = TermStats(document, term, occurrences)
             else:
-                inverted_idx[token].update_document_stats(document)
+                inverted_idx[term].add_document_stats(document, occurrences)
 
     # Now that we have the inverted index, we can calculate the tf-idf for each term
     total_docs = len(documents)

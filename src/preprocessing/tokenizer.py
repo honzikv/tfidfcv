@@ -18,7 +18,6 @@ class Tokenizer:
 
     def __init__(self):
         self.regexes = [Tokenizer.DEFAULT_REGEX, Tokenizer.URL_REGEX, Tokenizer.CENSORED_REGEX, Tokenizer.DATE_REGEX]
-        # self.regexes = [Tokenizer.CENSORED_REGEX]
 
     def tokenize(self, text: str):
         """

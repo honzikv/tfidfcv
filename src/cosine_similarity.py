@@ -59,7 +59,7 @@ class CosineSimilaritySearch:
         query_bow = query_doc.bow
         term_to_document_stats = {}
         for term, freq in query_bow.items():
-            document_stats = DocumentStats(query_doc)
+            document_stats = DocumentStats(query_doc, freq)
             # for a query document we will use non-log tf since it usually provides better results
             tf = freq
             idf = np.log(self.total_docs / self.tf_idf_inverted_idx[term].df)
