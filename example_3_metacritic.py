@@ -1,13 +1,16 @@
 from src.cosine_similarity import CosineSimilaritySearch
-from src.metacritic_reviews import read_metacritic_reviews
-from src.preprocessing.preprocessor import english_preprocessor
+from src.preprocessing.metacritic_preprocessing import deserialize_unpreprocessed_metacritic_reviews, preprocess_reviews
+from src.preprocessing.preprocessor import metacritic_preprocessor
 from src.tf_idf import create_inverted_tfidf_idx
 
-metacritic_reviews = read_metacritic_reviews('resources/documents.json', english_preprocessor)
+unpreprocessed_reviews = deserialize_unpreprocessed_metacritic_reviews('resources/unpreprocessed_reviews.json')
+
+# Preprocess
+metacritic_reviews = preprocess_reviews(unpreprocessed_reviews, metacritic_preprocessor)
 
 tf_idf = create_inverted_tfidf_idx(metacritic_reviews)
 
-cosine_similairty = CosineSimilaritySearch(tf_idf, metacritic_reviews, english_preprocessor)
+cosine_similairty = CosineSimilaritySearch(tf_idf, metacritic_reviews, metacritic_preprocessor)
 
 # RDR2 review
 query1 = 'this deserves way higher user score. this game is absolute masterpiece.'

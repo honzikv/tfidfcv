@@ -26,7 +26,8 @@ def map_review(json_review, is_critic_review, game_name):
     :return:
     """
     reviewer_name = json_review['reviewerName']
-    score = float(json_review['score'])
+    score = float(json_review['score']) if is_critic_review else float(json_review['score']) * 10
+
     date_reviewed = datetime.strptime(json_review['dateReviewed'], '%b %d, %Y')
     text = json_review['text']
 
@@ -74,6 +75,17 @@ def serialize_unpreprocessed_metacritic_reviews(reviews: List[MetacriticReview],
     """
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump([obj.__dict__ for obj in reviews], f, indent=4, default=str, sort_keys=True)
+
+
+def deserialize_unpreprocessed_metacritic_reviews(file_path):
+    """
+    Deserializes unpreprocessed reviews to MetacriticReview objects
+    :param file_path:
+    :return: list of MetacriticReview objects
+    """
+    with open(file_path, 'r', encoding='utf-8') as f:
+        reviews = json.load(f)
+        return [MetacriticReview(**review) for review in reviews]
 
 
 def preprocess_reviews(metacritic_reviews: List[MetacriticReview], preprocessor):
