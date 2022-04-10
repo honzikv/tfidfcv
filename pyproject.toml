@@ -10,6 +10,7 @@ regex = "^2022.3.15"
 numpy = "^1.22.3"
 nltk = "^3.7"
 langid = "^1.1.6"
+fastapi = "^0.75.1"
 
 [tool.poetry.dev-dependencies]
 

@@ -25,13 +25,14 @@ logger.debug('Langid was configured')
 class PreprocessorConfig:
 
     def __init__(self, lang, remove_stopwords, to_lowercase=True, remove_accents_before_stemming=False,
-                 remove_accents_after_stemming=True):
+                 remove_accents_after_stemming=True, remove_punctuation=False):
         self.to_lowercase = to_lowercase
         self.remove_accents_before_stemming = remove_accents_before_stemming
         self.remove_accents_after_stemming = remove_accents_after_stemming
         self.remove_stopwords = remove_stopwords
         self.lang = lang
         self._recognize_lang = False
+        self.remove_punctuation = remove_punctuation
 
     def _get_recognize_lang(self):
         return self._recognize_lang
@@ -83,7 +84,7 @@ class Preprocessor:
 
         # If tokenizer is not passed the text is split by whitespaces
         # Otherwise the tokenize method is called
-        tokens = self.tokenizer.tokenize(text) if self.tokenizer else text.split(' ')
+        tokens = self.tokenizer.tokenize(text, self.config.remove_punctuation) if self.tokenizer else text.split(' ')
 
         # Remove stop words if toggled
         if self.config.remove_stopwords:
@@ -138,4 +139,5 @@ english_preprocessor = Preprocessor(PreprocessorConfig('en', remove_stopwords=Tr
 
 metacritic_preprocessor = Preprocessor(
     PreprocessorConfig('en', remove_stopwords=True, to_lowercase=True, remove_accents_before_stemming=True,
-                       remove_accents_after_stemming=True), NLTKPorterStemmer(), _tokenizer, _load_english_stopwords())
+                       remove_accents_after_stemming=True, remove_punctuation=True), NLTKPorterStemmer(), _tokenizer,
+    _load_english_stopwords())

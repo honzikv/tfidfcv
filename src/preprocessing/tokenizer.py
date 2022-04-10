@@ -15,11 +15,12 @@ class Tokenizer:
 
     # Regex used to filter out all non-latin characters - e.g chinese, japanese, etc.
     BASIC_LATIN_CHARACTERS = r'[\p{IsCyrillic}\p{Han}\p{Hiragana}\p{Katakana}\u0600-\u06FF]'
+    PUNCTUATION = '!"#$%&\'()*+,-./:;<=>?@\[\\\]^_`{|}~'
 
     def __init__(self):
         self.regexes = [Tokenizer.DEFAULT_REGEX, Tokenizer.URL_REGEX, Tokenizer.CENSORED_REGEX, Tokenizer.DATE_REGEX]
 
-    def tokenize(self, text: str):
+    def tokenize(self, text: str, remove_punctuation: bool):
         """
         Tokenize text
         :param text: text to tokenize
@@ -28,6 +29,9 @@ class Tokenizer:
 
         # Remove all non-latin characters
         text = re.sub(Tokenizer.BASIC_LATIN_CHARACTERS, '', text)
+
+        if remove_punctuation:
+            text = re.sub(Tokenizer.PUNCTUATION, '', text)
 
         # For each regex, find all matches and add them to the set
         tokens = []

@@ -6,7 +6,7 @@ import numpy as np
 
 from src.document import Document
 from src.preprocessing.preprocessor import Preprocessor
-from src.tf_idf import DocumentStats
+from src.tf_idf import DocumentStats, create_inverted_tfidf_idx
 
 
 class CosineSimilaritySearch:
@@ -51,15 +51,6 @@ class CosineSimilaritySearch:
             # Get the document stats of this document for current term
             document_stats: DocumentStats = self.tf_idf_inverted_idx[term].documents[document.doc_id]
             doc_vec[self.term_to_vec_mapping[term]] = document_stats.tfidf
-        #
-        # # Calculate the cosine similarity
-        # print()
-        # qn = query_vec / np.linalg.norm(query_vec)
-        # vn = doc_vec / np.linalg.norm(doc_vec)
-        # print(qn)
-        # print(vn)
-        #
-        # print(qn.dot(vn))
 
         # Finally, calculate the cosine similarity
         return np.dot(query_vec, doc_vec) / (np.linalg.norm(doc_vec) * np.linalg.norm(query_vec))
@@ -90,9 +81,22 @@ class CosineSimilaritySearch:
 
         # Get the cosine similarity of the query with all documents
         results = []
-
         for doc in self.documents:
             # Get the cosine similarity of the query with the current document
             results.append((np.abs(self.get_bow_similarity(query_vec, doc, self.get_query_term_stats(query_doc))), doc))
 
         return heapq.nlargest(n, results, key=lambda x: x[0])
+
+
+def build_cos_similarity_model(documents: List[Document], preprocessor: Preprocessor):
+    """
+    Builds a cosine similarity model
+    :param documents:
+    :param preprocessor:
+    :return:
+    """
+    # Build inverted index
+    inverted_idx = create_inverted_tfidf_idx(documents)
+
+    return CosineSimilaritySearch(inverted_idx, documents, preprocessor)
+
