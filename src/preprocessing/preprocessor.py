@@ -1,33 +1,60 @@
-import os
+import logging
 import unicodedata
 from typing import Iterable
 
+from src.logging import logger_factory
 from src.preprocessing.czech_stemmer import CzechStemmer
 from src.preprocessing.porter_stemmer import PorterStemmer
 from src.preprocessing.tokenizer import Tokenizer
+from nltk.stem.porter import PorterStemmer as NLTKPorterStemmer
+import langid
+
+logger = logger_factory.get_logger(__name__)
+
+# Recognize all supported languages
+langid.set_languages(
+    ['af', 'am', 'an', 'ar', 'as', 'az', 'be', 'bg', 'bn', 'br', 'bs', 'ca', 'cs', 'cy', 'da',
+     'de', 'dz', 'el', 'en', 'eo', 'es', 'et', 'eu', 'fa', 'fi', 'fo', 'fr', 'ga', 'gl', 'gu', 'he', 'hi',
+     'hr', 'ht', 'hu', 'hy', 'id', 'is', 'it', 'ja', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ku', 'ky', 'la',
+     'lb', 'lo', 'lt', 'lv', 'mg', 'mk', 'ml', 'mn', 'mr', 'ms', 'mt', 'nb', 'ne', 'nl', 'nn', 'no', 'oc',
+     'or', 'pa', 'pl', 'ps', 'pt', 'qu', 'ro', 'ru', 'rw', 'se', 'si', 'sk', 'sl', 'sq', 'sr', 'sv', 'sw',
+     'ta', 'te', 'th', 'tl', 'tr', 'ug', 'uk', 'ur', 'vi', 'vo', 'wa', 'xh', 'zh', 'zu'])
+logging.debug('Langid was configured')
 
 
 class PreprocessorConfig:
 
-    def __init__(self, remove_stopwords, to_lowercase=True, remove_accents_before_stemming=False,
+    def __init__(self, lang, remove_stopwords, to_lowercase=True, remove_accents_before_stemming=False,
                  remove_accents_after_stemming=True):
         self.to_lowercase = to_lowercase
         self.remove_accents_before_stemming = remove_accents_before_stemming
         self.remove_accents_after_stemming = remove_accents_after_stemming
         self.remove_stopwords = remove_stopwords
+        self.lang = lang
+        self._recognize_lang = False
+
+    def _get_recognize_lang(self):
+        return self._recognize_lang
+
+    def _set_recognize_lang(self, value):
+        self._recognize_lang = value
+        if value is True:
+            logging.info("Language detection is enabled")
+        else:
+            logging.info("Language detection is disabled")
+
+    recognize_lang = property(_get_recognize_lang, _set_recognize_lang)
 
 
 class Preprocessor:
 
-    def __init__(self, lang, config: PreprocessorConfig, stemmer, tokenizer: Tokenizer,
+    def __init__(self, config: PreprocessorConfig, stemmer, tokenizer: Tokenizer,
                  stopwords: Iterable[str]):
         """
-        :param lang: language of the text
         :param config: config
         :param stemmer: stemmer must have stem() method
         :param tokenizer: tokenizer must have tokenize() method
         """
-        self.lang = lang
         self.config = config
         self.stemmer = stemmer
         self.tokenizer = tokenizer
@@ -39,6 +66,15 @@ class Preprocessor:
         :param text: text to be preprocessed
         :return: list of recognized terms occurring in the document
         """
+
+        # First recognize the language via
+        if self.config.recognize_lang:
+            lang, _ = langid.classify(text)
+
+            # If the language is different raise an exception that must be caught by the caller
+            if lang != self.config.lang:
+                raise ValueError("Language of the text is not the same as the language of the preprocessor")
+
         if self.config.to_lowercase:
             text = text.lower()
 
@@ -61,6 +97,7 @@ class Preprocessor:
         if self.config.remove_accents_after_stemming:
             tokens = [self._remove_accents(token) for token in tokens]
 
+        # logger.info(f'Preprocessed text: {text}')
         return tokens  # return list of tokens (terms)
 
     @staticmethod
@@ -94,7 +131,11 @@ def _load_english_stopwords():
 _tokenizer = Tokenizer()
 
 # Default instances
-czech_preprocessor = Preprocessor('cs', PreprocessorConfig(remove_stopwords=True), CzechStemmer(), _tokenizer,
+czech_preprocessor = Preprocessor(PreprocessorConfig('cs', remove_stopwords=True), CzechStemmer(), _tokenizer,
                                   _load_czech_stopwords())
-english_preprocessor = Preprocessor('en', PreprocessorConfig(remove_stopwords=True), PorterStemmer(), _tokenizer,
+english_preprocessor = Preprocessor(PreprocessorConfig('en', remove_stopwords=True), PorterStemmer(), _tokenizer,
                                     _load_english_stopwords())
+
+metacritic_preprocessor = Preprocessor(
+    PreprocessorConfig('en', remove_stopwords=True, to_lowercase=True, remove_accents_before_stemming=True,
+                       remove_accents_after_stemming=True), NLTKPorterStemmer(), _tokenizer, _load_english_stopwords())
