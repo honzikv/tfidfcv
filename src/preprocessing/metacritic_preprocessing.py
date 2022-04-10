@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List
 
 from src.doc_id_service import doc_id_service
-from src.metacritic_reviews import MetacriticReviewDocument
+from src.metacritic_review_do import MetacriticReviewDocument
 
 
 class MetacriticReview:

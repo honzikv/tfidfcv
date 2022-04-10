@@ -15,3 +15,16 @@ class MetacriticReviewDocument(Document):
         self.score = score
         self.text = text
         self.criticReview = criticReview
+
+    def __str__(self):
+        return f"""
+        {super().__str__()}
+        MetacriticReviewDocument
+            text: {self.text}
+            reviewer_name: {self.reviewer_name}
+            date_reviewed: {self.dateReviewed}
+            score: {self.score}
+            game_name: {self.gameName}
+            is_critic_review: {self.criticReview}"""
+
+

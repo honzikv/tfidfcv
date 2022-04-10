@@ -51,15 +51,15 @@ class CosineSimilaritySearch:
             # Get the document stats of this document for current term
             document_stats: DocumentStats = self.tf_idf_inverted_idx[term].documents[document.doc_id]
             doc_vec[self.term_to_vec_mapping[term]] = document_stats.tfidf
-
-        # Calculate the cosine similarity
-        print()
-        qn = query_vec / np.linalg.norm(query_vec)
-        vn = doc_vec / np.linalg.norm(doc_vec)
-        print(qn)
-        print(vn)
-
-        print(qn.dot(vn))
+        #
+        # # Calculate the cosine similarity
+        # print()
+        # qn = query_vec / np.linalg.norm(query_vec)
+        # vn = doc_vec / np.linalg.norm(doc_vec)
+        # print(qn)
+        # print(vn)
+        #
+        # print(qn.dot(vn))
 
         # Finally, calculate the cosine similarity
         return np.dot(query_vec, doc_vec) / (np.linalg.norm(doc_vec) * np.linalg.norm(query_vec))
