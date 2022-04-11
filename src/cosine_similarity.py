@@ -1,3 +1,4 @@
+import ctypes
 import heapq
 from collections import OrderedDict
 from typing import List, Dict, Tuple
@@ -27,7 +28,15 @@ class CosineSimilaritySearch:
 
         # The number of dimensions is equal to the number of terms
         self.dims = len(tf_idf_inverted_idx.keys())
-        self.term_to_vec_mapping = OrderedDict({term: idx for idx, term in enumerate(self.tf_idf_inverted_idx)})
+        self.term_to_vec_mapping = {term: idx for idx, term in enumerate(self.tf_idf_inverted_idx)}
+
+    @staticmethod
+    def append_term_to_vec(terms, term_mapping: Dict[str, int], last_idx):
+        for term in terms:
+            if term in term_mapping:
+                continue
+            term_mapping[term] = last_idx[0]
+            last_idx[0] = last_idx[0] + 1
 
     def get_bow_similarity(self, query_bow: dict, document: Document,
                            query_document_stats) -> float:
@@ -39,18 +48,23 @@ class CosineSimilaritySearch:
         :return: similarity between the two bags of words
         """
         doc_bow = document.bow
-        query_vec, doc_vec = np.zeros(self.dims), np.zeros(self.dims)
 
-        # Map values from bow in the query to the vector
-        for term, freq in query_bow.items():
-            # Get the document stats of the query document for current term and set the tfidf value
-            query_vec[self.term_to_vec_mapping[term]] = query_document_stats[term].tfidf
+        # We throw away dimensions where both query and document are zero since they are completely useless
+        # and will not change the outcome but boost our performance significantly
 
-        # Map values from bow in the document to the vector
-        for term, freq in doc_bow.items():
-            # Get the document stats of this document for current term
-            document_stats: DocumentStats = self.tf_idf_inverted_idx[term].documents[document.doc_id]
-            doc_vec[self.term_to_vec_mapping[term]] = document_stats.tfidf
+        term_mapping = {}
+        last_idx = [0]
+        self.append_term_to_vec(query_bow.keys(), term_mapping, last_idx)
+        self.append_term_to_vec(doc_bow.keys(), term_mapping, last_idx)
+
+        # Create vector for the query and the document
+        query_vec = np.zeros(len(term_mapping.keys()))
+        doc_vec = np.zeros(len(term_mapping.keys()))
+        for term in query_bow.keys():
+            query_vec[term_mapping[term]] = query_document_stats[term].tfidf
+
+        for term in doc_bow.keys():
+            doc_vec[term_mapping[term]] = self.tf_idf_inverted_idx[term].documents[document.doc_id].tfidf
 
         # Finally, calculate the cosine similarity
         return np.dot(query_vec, doc_vec) / (np.linalg.norm(doc_vec) * np.linalg.norm(query_vec))
@@ -72,6 +86,10 @@ class CosineSimilaritySearch:
         # We need to treat the query as a document
         # Preprocess the query and get the tokens
         query_terms = self.preprocessor.get_processed_tokens(query)
+
+        # Filter out those that are not indexed
+        # Todo this could be done in a better way
+        query_terms = [term for term in query_terms if term in self.tf_idf_inverted_idx]
 
         # Create query document
         query_doc = Document(-1, query_terms)
@@ -99,4 +117,3 @@ def build_cos_similarity_model(documents: List[Document], preprocessor: Preproce
     inverted_idx = create_inverted_tfidf_idx(documents)
 
     return CosineSimilaritySearch(inverted_idx, documents, preprocessor)
-
